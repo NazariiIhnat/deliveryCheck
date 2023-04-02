@@ -1,0 +1,221 @@
+const eanInputEl = document.querySelector(".ean-input");
+const spinerEl = document.querySelector(".spinner");
+const formEl = document.querySelector("form");
+const tablesContainerEl = document.querySelector(".tables-container");
+const overlayEL = document.querySelector(".overlay");
+const dropZoneEl = document.querySelector(".drop-zone");
+
+const data = [];
+
+//   {
+//     invoiceNumber: "123",
+//     itemList: [
+//       { ean: 111, quantity: 1, actualQuantity: 0 },
+//       { ean: 222, quantity: 2, actualQuantity: 0 },
+//       { ean: 333, quantity: 3, actualQuantity: 0 },
+//     ],
+//   },
+//   {
+//     invoiceNumber: "456",
+//     itemList: [
+//       { ean: 111, quantity: 1, actualQuantity: 0 },
+//       { ean: 444, quantity: 10, actualQuantity: 0 },
+//       { ean: 555, quantity: 5, actualQuantity: 0 },
+//       { ean: 666, quantity: 6, actualQuantity: 0 },
+//       { ean: 444, quantity: 4, actualQuantity: 0 },
+//     ],
+//   },
+// ];
+
+const createInvoiceTable = function (invoice) {
+  const html = `
+  <div class="table-box" id="invoice-${invoice.invoiceNumber}">
+        <h1 class="table-header">Invoice: ${invoice.invoiceNumber}</h1>
+        <table>
+          <tr>
+            <th>№</th>
+            <th>EAN</th>
+            <th>Quantity</th>
+            <th>Actual quantity</th>
+          </tr>
+          ${generateDataRows(invoice)}
+          </table>
+      </div>
+  `;
+  tablesContainerEl.insertAdjacentHTML("afterBegin", html);
+};
+const generateDataRows = function (invoice) {
+  const html = invoice.itemList.reduce((acc, val, index) => {
+    acc += `<tr id="ean-${val.ean}">
+        <td class="table__index">${index + 1}</td>
+        <td class="table__ean">${val.ean}</td>
+        <td class="table__quantity">${val.quantity}</td>
+        <td class="table__actual-quantity">${val.actualQuantity}</td>
+      </tr>`;
+    return acc;
+  }, "");
+  return html;
+};
+
+const loadDataFromCSV = function () {
+  if (data.length === 0) return;
+  data.forEach((invoice) => createInvoiceTable(invoice));
+};
+
+loadDataFromCSV();
+
+formEl.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") {
+    let ean = eanInputEl.value;
+    let quantity = spinerEl.value;
+    if (ean.length !== 13) {
+      alert("Error! EAN-13 code must have 13 digits.");
+      return;
+    }
+    if (!isDigit(ean)) {
+      alert("Error! EAN-13 code must include digits only.");
+      return;
+    }
+    if (quantity < 1) {
+      alert("Error! Quantity must be greather than 0.");
+      return;
+    }
+    if (!isDigit(quantity)) {
+      alert("Error! Bad quantity format.");
+      return;
+    }
+    quantity = +quantity;
+
+    let itemIsPresent = false;
+
+    data.forEach((invoice) => {
+      const items = invoice.itemList.filter((item) => item.ean === ean);
+      if (items.length > 0) itemIsPresent = true;
+      if (!items && !itemIsPresent) return;
+
+      items.forEach((item) => {
+        if (!quantity) return;
+        const index = invoice.itemList.indexOf(item);
+        const maxQuantityThatItemCanAccept =
+          item.quantity - item.actualQuantity;
+
+        if (quantity < maxQuantityThatItemCanAccept) {
+          item.actualQuantity += quantity;
+          quantity = 0;
+          updateInvoiceItemQuantityEl(
+            invoice.invoiceNumber,
+            index,
+            item.actualQuantity
+          );
+        }
+
+        if (quantity === maxQuantityThatItemCanAccept) {
+          item.actualQuantity += quantity;
+          quantity = 0;
+          updateInvoiceItemQuantityEl(
+            invoice.invoiceNumber,
+            index,
+            item.actualQuantity,
+            true
+          );
+        }
+
+        if (quantity > maxQuantityThatItemCanAccept) {
+          item.actualQuantity += maxQuantityThatItemCanAccept;
+          quantity -= maxQuantityThatItemCanAccept;
+          updateInvoiceItemQuantityEl(
+            invoice.invoiceNumber,
+            index,
+            item.actualQuantity,
+            true
+          );
+        }
+
+        if (
+          quantity &&
+          items.indexOf(item) === items.length - 1 &&
+          data.indexOf(invoice) === data.length - 1
+        ) {
+          item.actualQuantity += quantity;
+          quantity = 0;
+          updateInvoiceItemQuantityEl(
+            invoice.invoiceNumber,
+            index,
+            item.actualQuantity,
+            false,
+            true
+          );
+        }
+      });
+    });
+    if (!itemIsPresent) alert(`Error! No item with code ${ean}`);
+    eanInputEl.value = "";
+  }
+});
+
+const isDigit = function (input) {
+  return /^\d+$/.test(input);
+};
+
+const updateInvoiceItemQuantityEl = function (
+  invoiceNum,
+  index,
+  quantity,
+  paintGreen = false,
+  paintRed = false
+) {
+  const invoiceEl = tablesContainerEl.querySelector(`#invoice-${invoiceNum}`);
+  const rowEl = invoiceEl.querySelectorAll(`tr`)[index + 1];
+  rowEl.querySelector(".table__actual-quantity").textContent = quantity;
+  if (paintGreen) rowEl.classList.add("highlight-green");
+  if (paintRed) rowEl.classList.add("highlight-red");
+};
+
+dropZoneEl.addEventListener("click", async (e) => {
+  const files = await readFiles();
+  files.forEach((file) => rendeFile(file));
+});
+
+async function readFiles() {
+  let input = document.createElement("input");
+  input.type = "file";
+  input.multiple = true;
+  input.accept = ".csv";
+  input.click();
+  return new Promise((resolve) => {
+    input.onchange = () => {
+      resolve(Array.from(input.files));
+    };
+  });
+}
+
+const rendeFile = function (file) {
+  const reader = new FileReader();
+  reader.onload = function () {
+    const csvData = reader.result
+      .replaceAll("\r", "")
+      .split("\n")
+      .map(function (row) {
+        return row.split(",");
+      });
+
+    const fileName = file.name.split(".")[0];
+    const eanCol = csvData[0].indexOf("ean");
+    const quantityCol = csvData[0].indexOf("quantity");
+    const valuesCsv = csvData.slice(1);
+    let invoiceObj = {
+      invoiceNumber: fileName,
+      itemList: [],
+    };
+    valuesCsv.forEach((dataRow) => {
+      const ean = dataRow[eanCol];
+      const quantity = dataRow[quantityCol];
+      const actualQuantity = 0;
+      invoiceObj.itemList.push({ ean, quantity, actualQuantity });
+    });
+    data.push(invoiceObj);
+    loadDataFromCSV();
+    overlayEL.classList.add("hidden");
+  };
+  reader.readAsText(file);
+};

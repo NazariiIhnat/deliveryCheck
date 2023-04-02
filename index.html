@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="css/reset.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="script.js" defer></script>
+    <title>Document</title>
+  </head>
+  <body ondragenter="dragHundler($event)">
+    <div class="container">
+      <div class="overlay">
+        <div class="drop-zone">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="drop-zone--ico"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
+            />
+          </svg>
+          <p class="drop-zone--text">Choose or drop .csv files</p>
+        </div>
+      </div>
+      <form>
+        <input
+          class="ean-input"
+          type="EAN-13"
+          placeholder="Enter EAN code..."
+        />
+        <div class="quantity-spinner">
+          <input class="spinner" type="number" value="1" min="1" />
+        </div>
+      </form>
+      <div class="tables-container"></div>
+    </div>
+  </body>
+</html>
