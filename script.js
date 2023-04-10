@@ -172,11 +172,10 @@ const updateInvoiceItemQuantityEl = function (
 };
 
 dropZoneEl.addEventListener("click", async (e) => {
-  const files = await readFiles();
-  files.forEach((file) => rendeFile(file));
+  const files = await loadFiles();
 });
 
-async function readFiles() {
+async function loadFiles() {
   let input = document.createElement("input");
   input.type = "file";
   input.multiple = true;
@@ -189,33 +188,33 @@ async function readFiles() {
   });
 }
 
-const rendeFile = function (file) {
-  const reader = new FileReader();
-  reader.onload = function () {
-    const csvData = reader.result
-      .replaceAll("\r", "")
-      .split("\n")
-      .map(function (row) {
-        return row.split(",");
+const getInvoiceObjFromFile = function (file) {
+  return new Promise((resolve) => {
+    let invoiceObj = {};
+    const reader = new FileReader();
+    reader.onload = function () {
+      const csvData = reader.result
+        .replaceAll("\r", "")
+        .split("\n")
+        .map(function (row) {
+          return row.split(",");
+        });
+      const fileName = file.name.split(".")[0];
+      const eanCol = csvData[0].indexOf("ean");
+      const quantityCol = csvData[0].indexOf("quantity");
+      const valuesCsv = csvData.slice(1);
+      invoiceObj = {
+        invoiceNumber: fileName,
+        itemList: [],
+      };
+      valuesCsv.forEach((dataRow) => {
+        const ean = dataRow[eanCol];
+        const quantity = dataRow[quantityCol];
+        const actualQuantity = 0;
+        invoiceObj.itemList.push({ ean, quantity, actualQuantity });
       });
-
-    const fileName = file.name.split(".")[0];
-    const eanCol = csvData[0].indexOf("ean");
-    const quantityCol = csvData[0].indexOf("quantity");
-    const valuesCsv = csvData.slice(1);
-    let invoiceObj = {
-      invoiceNumber: fileName,
-      itemList: [],
+      resolve(invoiceObj);
     };
-    valuesCsv.forEach((dataRow) => {
-      const ean = dataRow[eanCol];
-      const quantity = dataRow[quantityCol];
-      const actualQuantity = 0;
-      invoiceObj.itemList.push({ ean, quantity, actualQuantity });
-    });
-    data.push(invoiceObj);
-    loadDataFromCSV();
-    overlayEL.classList.add("hidden");
-  };
-  reader.readAsText(file);
+    reader.readAsText(file);
+  });
 };
