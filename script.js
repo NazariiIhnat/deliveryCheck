@@ -173,6 +173,25 @@ const updateInvoiceItemQuantityEl = function (
 
 dropZoneEl.addEventListener("click", async (e) => {
   const files = await loadFiles();
+  files.forEach((file) => {
+    Papa.parse(file, {
+      header: true,
+      escapeChar: "№",
+      complete: function (results) {
+        const itemList = results.data.map((item) => {
+          return {
+            ean: item.ean,
+            quantity: item.quantity,
+            actualQuantity: 0,
+          };
+        });
+        const invoice = { invoiceNumber: file.name, itemList };
+        data.push(invoice);
+        createInvoiceTable(invoice);
+        overlayEL.classList.add("hidden");
+      },
+    });
+  });
 });
 
 async function loadFiles() {
@@ -187,34 +206,3 @@ async function loadFiles() {
     };
   });
 }
-
-const getInvoiceObjFromFile = function (file) {
-  return new Promise((resolve) => {
-    let invoiceObj = {};
-    const reader = new FileReader();
-    reader.onload = function () {
-      const csvData = reader.result
-        .replaceAll("\r", "")
-        .split("\n")
-        .map(function (row) {
-          return row.split(",");
-        });
-      const fileName = file.name.split(".")[0];
-      const eanCol = csvData[0].indexOf("ean");
-      const quantityCol = csvData[0].indexOf("quantity");
-      const valuesCsv = csvData.slice(1);
-      invoiceObj = {
-        invoiceNumber: fileName,
-        itemList: [],
-      };
-      valuesCsv.forEach((dataRow) => {
-        const ean = dataRow[eanCol];
-        const quantity = dataRow[quantityCol];
-        const actualQuantity = 0;
-        invoiceObj.itemList.push({ ean, quantity, actualQuantity });
-      });
-      resolve(invoiceObj);
-    };
-    reader.readAsText(file);
-  });
-};
