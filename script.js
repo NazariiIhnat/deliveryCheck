@@ -29,7 +29,7 @@ const data = [];
 
 const createInvoiceTable = function (invoice) {
   const html = `
-  <div class="table-box" id="invoice-${invoice.invoiceNumber}">
+  <div class="table-box" id="${invoice.invoiceNumber}">
         <h1 class="table-header">Invoice: ${invoice.invoiceNumber}</h1>
         <table>
           <tr>
@@ -164,7 +164,7 @@ const updateInvoiceItemQuantityEl = function (
   paintGreen = false,
   paintRed = false
 ) {
-  const invoiceEl = tablesContainerEl.querySelector(`#invoice-${invoiceNum}`);
+  const invoiceEl = document.getElementById(`${invoiceNum}`);
   const rowEl = invoiceEl.querySelectorAll(`tr`)[index + 1];
   rowEl.querySelector(".table__actual-quantity").textContent = quantity;
   if (paintGreen) rowEl.classList.add("highlight-green");
@@ -173,25 +173,12 @@ const updateInvoiceItemQuantityEl = function (
 
 dropZoneEl.addEventListener("click", async (e) => {
   const files = await loadFiles();
-  files.forEach((file) => {
-    Papa.parse(file, {
-      header: true,
-      escapeChar: "№",
-      complete: function (results) {
-        const itemList = results.data.map((item) => {
-          return {
-            ean: item.ean,
-            quantity: item.quantity,
-            actualQuantity: 0,
-          };
-        });
-        const invoice = { invoiceNumber: file.name, itemList };
-        data.push(invoice);
-        createInvoiceTable(invoice);
-        overlayEL.classList.add("hidden");
-      },
-    });
+  files.forEach(async (file) => {
+    const invoice = await getInvoiceObjFromFile(file);
+    data.push(invoice);
+    createInvoiceTable(invoice);
   });
+  overlayEL.classList.add("hidden");
 });
 
 async function loadFiles() {
@@ -204,5 +191,28 @@ async function loadFiles() {
     input.onchange = () => {
       resolve(Array.from(input.files));
     };
+  });
+}
+
+function getInvoiceObjFromFile(file) {
+  return new Promise((resolve) => {
+    Papa.parse(file, {
+      header: true,
+      escapeChar: "№",
+      complete: function (results) {
+        const itemList = results.data.map((item) => {
+          return {
+            ean: item.ean,
+            quantity: item.quantity,
+            actualQuantity: 0,
+          };
+        });
+        const invoice = { invoiceNumber: file.name, itemList };
+        resolve(invoice);
+        // data.push(invoice);
+        // createInvoiceTable(invoice);
+        // overlayEL.classList.add("hidden");
+      },
+    });
   });
 }
