@@ -1,13 +1,4 @@
-const eanInputEl = document.querySelector(".ean-input");
-const spinerEl = document.querySelector(".spinner");
-const formEl = document.querySelector("form");
-const tablesContainerEl = document.querySelector(".tables-container");
-const overlayEL = document.querySelector(".overlay");
-const dropZoneEl = document.querySelector(".drop-zone");
-
-const data = [];
-
-//   {
+// const invoiceObjExample = {
 //     invoiceNumber: "123",
 //     itemList: [
 //       { ean: 111, quantity: 1, actualQuantity: 0 },
@@ -15,18 +6,23 @@ const data = [];
 //       { ean: 333, quantity: 3, actualQuantity: 0 },
 //     ],
 //   },
-//   {
-//     invoiceNumber: "456",
-//     itemList: [
-//       { ean: 111, quantity: 1, actualQuantity: 0 },
-//       { ean: 444, quantity: 10, actualQuantity: 0 },
-//       { ean: 555, quantity: 5, actualQuantity: 0 },
-//       { ean: 666, quantity: 6, actualQuantity: 0 },
-//       { ean: 444, quantity: 4, actualQuantity: 0 },
-//     ],
-//   },
-// ];
 
+const eanInputEl = document.querySelector(".ean-input");
+const spinerEl = document.querySelector(".spinner");
+const formEl = document.querySelector("form");
+const tablesContainerEl = document.querySelector(".tables-container");
+const overlayEL = document.querySelector(".overlay");
+const dropZoneEl = document.querySelector(".drop-zone");
+
+/**
+ * Store all invoice objects;
+ */
+const data = [];
+
+/**
+ * Generates and render table according to invoice obj
+ * @param {invoice} Invoice Recives invoice object as shown at the top of file
+ */
 const createInvoiceTable = function (invoice) {
   const html = `
   <div class="table-box" id="${invoice.invoiceNumber}">
@@ -44,6 +40,12 @@ const createInvoiceTable = function (invoice) {
   `;
   tablesContainerEl.insertAdjacentHTML("afterBegin", html);
 };
+
+/**
+ * Conver invoice object to String of HTML code of single row of item.
+ * @param {invoice} Invoice Recives invoice object as shown at the top of file.
+ * @returns String of HTML code for single row of item.
+ */
 const generateDataRows = function (invoice) {
   const html = invoice.itemList.reduce((acc, val, index) => {
     acc += `<tr id="ean-${val.ean}">
@@ -57,13 +59,9 @@ const generateDataRows = function (invoice) {
   return html;
 };
 
-const loadDataFromCSV = function () {
-  if (data.length === 0) return;
-  data.forEach((invoice) => createInvoiceTable(invoice));
-};
-
-loadDataFromCSV();
-
+/**
+ * Find necessary item and update actual quantity after enter key pressed or barcode of item is scanned. The ipdate happend only if item pass all conditions
+ */
 formEl.addEventListener("keypress", (e) => {
   if (e.key === "Enter") {
     let ean = eanInputEl.value;
@@ -99,6 +97,7 @@ formEl.addEventListener("keypress", (e) => {
         const maxQuantityThatItemCanAccept =
           item.quantity - item.actualQuantity;
 
+        // Add quantity to items actual quantity. After execution of this block quantity = 0, item.quantity < item.actualQuantity.
         if (quantity < maxQuantityThatItemCanAccept) {
           item.actualQuantity += quantity;
           quantity = 0;
@@ -109,6 +108,7 @@ formEl.addEventListener("keypress", (e) => {
           );
         }
 
+        // Add quantity to items actual quantity and set background of item green. After execution of this block quantity = 0, item.quantity = item.actualQuantity.
         if (quantity === maxQuantityThatItemCanAccept) {
           item.actualQuantity += quantity;
           quantity = 0;
@@ -120,6 +120,7 @@ formEl.addEventListener("keypress", (e) => {
           );
         }
 
+        //Add quantity to item actual quantity and set background of item green. After execution of this block quantity != 0, item.quantity = item.actualQuantity.
         if (quantity > maxQuantityThatItemCanAccept) {
           item.actualQuantity += maxQuantityThatItemCanAccept;
           quantity -= maxQuantityThatItemCanAccept;
@@ -131,6 +132,7 @@ formEl.addEventListener("keypress", (e) => {
           );
         }
 
+        // Add quantity to item actual quantity and set background of item red. After execution of this block quantity = 0, item.quantity < item.actualQuantity.
         if (
           quantity &&
           items.indexOf(item) === items.length - 1 &&
@@ -153,10 +155,23 @@ formEl.addEventListener("keypress", (e) => {
   }
 });
 
+/**
+ * Check if input string if digit.
+ * @param {input} String of digit.
+ * @returns true if String is digit.
+ */
 const isDigit = function (input) {
   return /^\d+$/.test(input);
 };
 
+/**
+ * Update quantity and background color of specific item of cpecific invoice.
+ * @param {*} String number of invoce.
+ * @param {*} Number index of item in invoice.
+ * @param {*} Number quantity to set.
+ * @param {*} Boolean if true paint row background of item green. Default false.
+ * @param {*} paintRed if true paint row background of item red. Default false.
+ */
 const updateInvoiceItemQuantityEl = function (
   invoiceNum,
   index,
@@ -171,6 +186,9 @@ const updateInvoiceItemQuantityEl = function (
   if (paintRed) rowEl.classList.add("highlight-red");
 };
 
+/**
+ * Open file select dialog by clicking on drop zone and create tables of invoices in browser.
+ */
 dropZoneEl.addEventListener("click", async (e) => {
   const files = await loadFiles();
   files.forEach(async (file) => {
@@ -181,6 +199,10 @@ dropZoneEl.addEventListener("click", async (e) => {
   overlayEL.classList.add("hidden");
 });
 
+/**
+ * Load .csv files and returns Array of file objects.
+ * @returns Array of file objects.
+ */
 async function loadFiles() {
   let input = document.createElement("input");
   input.type = "file";
@@ -194,6 +216,11 @@ async function loadFiles() {
   });
 }
 
+/**
+ * Recives .csv file and parse it into invoice object as shown at the top op file.
+ * @param {file} File to be parsed.
+ * @returns Invoice object.
+ */
 function getInvoiceObjFromFile(file) {
   return new Promise((resolve) => {
     Papa.parse(file, {
@@ -214,10 +241,16 @@ function getInvoiceObjFromFile(file) {
   });
 }
 
+/**
+ * Prevent default behaviour of onDragOver event.
+ */
 dropZoneEl.addEventListener("dragover", (event) => {
   event.preventDefault();
 });
 
+/**
+ * Open file by dropping them on drop zone and create tables of invoices in browser.
+ */
 dropZoneEl.addEventListener("drop", async (event) => {
   event.preventDefault();
   const files = event.dataTransfer.files;
