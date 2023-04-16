@@ -209,10 +209,23 @@ function getInvoiceObjFromFile(file) {
         });
         const invoice = { invoiceNumber: file.name, itemList };
         resolve(invoice);
-        // data.push(invoice);
-        // createInvoiceTable(invoice);
-        // overlayEL.classList.add("hidden");
       },
     });
   });
 }
+
+dropZoneEl.addEventListener("dragover", (event) => {
+  event.preventDefault();
+});
+
+dropZoneEl.addEventListener("drop", async (event) => {
+  event.preventDefault();
+  const files = event.dataTransfer.files;
+  Object.entries(files).forEach(async (key) => {
+    const file = key[1];
+    const invoiceObj = await getInvoiceObjFromFile(file);
+    data.push(invoiceObj);
+    createInvoiceTable(invoiceObj);
+  });
+  overlayEL.classList.add("hidden");
+});
