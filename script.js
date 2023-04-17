@@ -93,6 +93,8 @@ formEl.addEventListener("keypress", (e) => {
 
       items.forEach((item) => {
         if (!quantity) return;
+
+        if (item.quantity === item.actualQuantity) return;
         const index = invoice.itemList.indexOf(item);
         const maxQuantityThatItemCanAccept =
           item.quantity - item.actualQuantity;
@@ -133,6 +135,7 @@ formEl.addEventListener("keypress", (e) => {
         }
 
         // Add quantity to item actual quantity and set background of item red. After execution of this block quantity = 0, item.quantity < item.actualQuantity.
+        console.log(items.indexOf(item), items.length);
         if (
           quantity &&
           items.indexOf(item) === items.length - 1 &&
