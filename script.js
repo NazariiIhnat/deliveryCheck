@@ -10,7 +10,7 @@
 const eanInputEl = document.querySelector(".ean-input");
 const spinerEl = document.querySelector(".spinner");
 const formEl = document.querySelector("form");
-const tablesContainerEl = document.querySelector(".tables-container");
+const invoicesContainerEl = document.querySelector(".invoice-container");
 const overlayEL = document.querySelector(".overlay");
 const dropZoneEl = document.querySelector(".drop-zone");
 
@@ -25,8 +25,8 @@ const data = [];
  */
 const createInvoiceTable = function (invoice) {
   const html = `
-  <div class="table-box" id="${invoice.invoiceNumber}">
-        <h1 class="table-header">Invoice: ${invoice.invoiceNumber}</h1>
+  <div class="invoice-box" id="${invoice.invoiceNumber}">
+        <h1 class="invoice-header">Invoice: ${invoice.invoiceNumber}</h1>
         <table>
           <tr>
             <th>№</th>
@@ -38,7 +38,7 @@ const createInvoiceTable = function (invoice) {
           </table>
       </div>
   `;
-  tablesContainerEl.insertAdjacentHTML("afterBegin", html);
+  invoicesContainerEl.insertAdjacentHTML("afterBegin", html);
 };
 
 /**
@@ -49,10 +49,10 @@ const createInvoiceTable = function (invoice) {
 const generateDataRows = function (invoice) {
   const html = invoice.itemList.reduce((acc, val, index) => {
     acc += `<tr id="ean-${val.ean}">
-        <td class="table__index">${index + 1}</td>
-        <td class="table__ean">${val.ean}</td>
-        <td class="table__quantity">${val.quantity}</td>
-        <td class="table__actual-quantity">${val.actualQuantity}</td>
+        <td class="invoice__index">${index + 1}</td>
+        <td class="invoice__ean">${val.ean}</td>
+        <td class="invoice__quantity">${val.quantity}</td>
+        <td class="invoice__actual-quantity">${val.actualQuantity}</td>
       </tr>`;
     return acc;
   }, "");
@@ -66,6 +66,7 @@ formEl.addEventListener("keypress", (e) => {
   if (e.key === "Enter") {
     let ean = eanInputEl.value;
     let quantity = spinerEl.value;
+
     if (ean.length !== 13) {
       alert("Error! EAN-13 code must have 13 digits.");
       return;
@@ -86,7 +87,9 @@ formEl.addEventListener("keypress", (e) => {
 
     let itemIsPresent = false;
 
-    data.forEach((invoice) => {
+    const invoices = getInvoiceWichHasItemsWithGivenEan(ean);
+
+    invoices.forEach((invoice) => {
       const items = invoice.itemList.filter((item) => item.ean === ean);
       if (items.length > 0) itemIsPresent = true;
       if (!items && !itemIsPresent) return;
@@ -135,11 +138,10 @@ formEl.addEventListener("keypress", (e) => {
         }
 
         // Add quantity to item actual quantity and set background of item red. After execution of this block quantity = 0, item.quantity < item.actualQuantity.
-        console.log(items.indexOf(item), items.length);
         if (
           quantity &&
           items.indexOf(item) === items.length - 1 &&
-          data.indexOf(invoice) === data.length - 1
+          invoices.indexOf(invoice) === invoices.length - 1
         ) {
           item.actualQuantity += quantity;
           quantity = 0;
@@ -151,12 +153,26 @@ formEl.addEventListener("keypress", (e) => {
             true
           );
         }
+        scrollIntoLineOfInvoice(invoice, index);
       });
     });
     if (!itemIsPresent) alert(`Error! No item with code ${ean}`);
     eanInputEl.value = "";
   }
 });
+
+/**
+ * Find all invoices that have ite with given EAN code.
+ * @param {ean} String representation of item EAN code.
+ * @returns Array of invoices that includes specific item.
+ */
+function getInvoiceWichHasItemsWithGivenEan(ean) {
+  return data.reduce((acc, invoice) => {
+    const items = invoice.itemList.filter((item) => item.ean === ean);
+    if (items.length != 0) acc.push(invoice);
+    return acc;
+  }, []);
+}
 
 /**
  * Check if input string if digit.
@@ -169,11 +185,11 @@ const isDigit = function (input) {
 
 /**
  * Update quantity and background color of specific item of cpecific invoice.
- * @param {*} String number of invoce.
- * @param {*} Number index of item in invoice.
- * @param {*} Number quantity to set.
- * @param {*} Boolean if true paint row background of item green. Default false.
- * @param {*} paintRed if true paint row background of item red. Default false.
+ * @param {invoiceNum} String number of invoce.
+ * @param {index} Number index of item in invoice.
+ * @param {quantity} Number quantity to set.
+ * @param {paintGreen} Boolean if true paint row background of item green. Default false.
+ * @param {paintRed} Boolean if true paint row background of item red. Default false.
  */
 const updateInvoiceItemQuantityEl = function (
   invoiceNum,
@@ -184,9 +200,20 @@ const updateInvoiceItemQuantityEl = function (
 ) {
   const invoiceEl = document.getElementById(`${invoiceNum}`);
   const rowEl = invoiceEl.querySelectorAll(`tr`)[index + 1];
-  rowEl.querySelector(".table__actual-quantity").textContent = quantity;
+  rowEl.querySelector(".invoice__actual-quantity").textContent = quantity;
   if (paintGreen) rowEl.classList.add("highlight-green");
   if (paintRed) rowEl.classList.add("highlight-red");
+};
+
+/**
+ * Scrool into view of scpeific invoice of cpecific line.
+ * @param {invoice} Invoice which include item.
+ * @param {line} Number of line to be scrooled into view.
+ */
+const scrollIntoLineOfInvoice = function (invoice, line) {
+  const invoiceEl = document.getElementById(invoice.invoiceNumber);
+  const lines = invoiceEl.getElementsByTagName("tr");
+  lines[line].scrollIntoView(true);
 };
 
 /**
