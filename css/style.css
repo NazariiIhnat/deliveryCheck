@@ -1,10 +1,3 @@
-:root {
-  --green: linear-gradient(0.35turn, #77f1c0, #3cbc5a);
-  --red: linear-gradient(0.35turn, #ef6666, #eb0c0c);
-}
-
-/* set font and color */
-
 body {
   position: relative;
 }
@@ -52,7 +45,6 @@ table {
   width: 100%;
 }
 
-/* set header style */
 th {
   background-color: #f2f2f2;
   color: #000;
@@ -62,26 +54,19 @@ th {
   border-bottom: 0.1rem solid black;
 }
 
-/* set alternating row background color */
 tr:nth-child(even) {
   background-color: #f2f2f2;
 }
 
-/* set cell padding and alignment */
 td {
   padding: 1rem;
   text-align: left;
   vertical-align: top;
 }
 
-/* set hover effect on rows */
 tr:hover {
   background-color: #e6e6e6;
-}
-
-#highlight {
-  background-color: #968b8b;
-  color: #fff;
+  transition: all 0.3s;
 }
 
 tr.highlight-green {
@@ -90,6 +75,11 @@ tr.highlight-green {
 
 tr.highlight-red {
   background-image: linear-gradient(0.35turn, #ef6666, #eb0c0c);
+}
+
+tr.highlight-update {
+  background-image: none;
+  background-color: #b4d2ed;
 }
 
 .overlay {

@@ -203,6 +203,8 @@ const updateInvoiceItemQuantityEl = function (
   rowEl.querySelector(".invoice__actual-quantity").textContent = quantity;
   if (paintGreen) rowEl.classList.add("highlight-green");
   if (paintRed) rowEl.classList.add("highlight-red");
+  rowEl.classList.add("highlight-update");
+  setTimeout(() => rowEl.classList.remove("highlight-update"), 200);
 };
 
 /**
