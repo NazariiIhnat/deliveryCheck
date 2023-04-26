@@ -4,10 +4,10 @@
   },
   "name": "delivery-check",
   "version": "1.0.0",
-  "main": "script.js",
+  "default": "script.js",
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "index.html"
   },
   "repository": {
     "type": "git",
